@@ -64,6 +64,11 @@ Each board is printed with what the model found, its latency and Odoo's verdict,
 saved with its boxes under `runs/conveyor-<time>/`. At the end, Odoo's verdicts are compared
 with what each board really was.
 
+`--split valid` runs the validation boards instead of the test ones. `--jsonl` prints one
+JSON object per board (detections, annotated image, Odoo's answer) and a last one with the
+summary, for another program to follow the line: the project's video shows its boards
+this way.
+
 In Odoo, the source needs a station (`CV_ODOO_STATION`) and the product `PCB-001`. The
 `melt` class is created by Odoo the first time the model sends it, allowing none per
 board: rename it *Melt* and set its severity under *Vision Inspection → Configuration →

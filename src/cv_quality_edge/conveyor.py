@@ -13,6 +13,7 @@ CV_ODOO_SOURCE, CV_ODOO_TOKEN, CV_ODOO_STATION.
 
 import argparse
 import datetime
+import json
 import os
 import random
 import time
@@ -56,7 +57,7 @@ def run(args):
     run_id = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
     out = os.path.join("runs", f"conveyor-{run_id}")
     os.makedirs(out, exist_ok=True)
-    line = boards(args.dataset, seed=args.seed, limit=args.limit)
+    line = boards(args.dataset, split=args.split, seed=args.seed, limit=args.limit)
     results = []
     for number, (path, defective) in enumerate(line, start=1):
         started = time.monotonic()
@@ -65,8 +66,9 @@ def run(args):
         detect_start = time.perf_counter()
         detections = detector.detect(image)
         latency = (time.perf_counter() - detect_start) * 1000
-        annotate(image, detections).save(os.path.join(out, f"{number:03d}_{name}"))
-        verdict, answer = None, "not sent"
+        annotated = os.path.abspath(os.path.join(out, f"{number:03d}_{name}"))
+        annotate(image, detections).save(annotated)
+        verdict, answer, response = None, "not sent", {}
         if odoo:
             status, response = odoo.send(odoo_client.payload(
                 image,
@@ -80,12 +82,23 @@ def run(args):
             verdict = response.get("verdict") if status == 200 else None
             answer = f"{response.get('inspection')} {verdict.upper()}" if verdict else f"error {status}: {response.get('error')}"
         truth = "defective" if defective else "good"
-        print(f"[{number:3d}/{len(line)}] {name:22s} {truth:9s} | {describe(detections)} ({latency:.0f} ms) | Odoo: {answer}")
+        if args.jsonl:
+            print(json.dumps({
+                "number": number, "total": len(line), "board": name, "image": os.path.abspath(path),
+                "annotated": annotated, "defective": defective, "detections": detections,
+                "latency_ms": round(latency), "inspection": response.get("inspection"), "verdict": verdict,
+                "error": response.get("error"),
+            }), flush=True)
+        else:
+            print(f"[{number:3d}/{len(line)}] {name:22s} {truth:9s} | {describe(detections)} ({latency:.0f} ms) | Odoo: {answer}")
         results.append((defective, verdict))
         wait = args.interval - (time.monotonic() - started)
         if wait > 0 and number < len(line):
             time.sleep(wait)
     summary = tally(results)
+    if args.jsonl:
+        print(json.dumps({"summary": summary}), flush=True)
+        return summary
     print(f"\nAnnotated boards in {out}/")
     if odoo:
         caught = summary.get("defective_failed", 0) + summary.get("defective_review", 0)
@@ -105,6 +118,8 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     parser.add_argument("--model", default=DEFAULT_MODEL)
     parser.add_argument("--dataset", default="dataset")
+    parser.add_argument("--split", default="test", choices=("train", "valid", "test"),
+                        help="the boards that pass: test, never seen in training, by default")
     parser.add_argument("--threshold", type=float, default=0.4)
     parser.add_argument("--interval", type=float, default=3.0, help="seconds between two boards")
     parser.add_argument("--limit", type=int)
@@ -116,6 +131,8 @@ def main():
     parser.add_argument("--station", default=env("CV_ODOO_STATION"))
     parser.add_argument("--product-code", default="PCB-001")
     parser.add_argument("--dry-run", action="store_true", help="detect only, send nothing to Odoo")
+    parser.add_argument("--jsonl", action="store_true",
+                        help="one JSON object per board (and a last one with the summary), for other programs")
     args = parser.parse_args()
     if not args.dry_run and not args.token:
         parser.error("give the source's token (--token or CV_ODOO_TOKEN), or use --dry-run")
