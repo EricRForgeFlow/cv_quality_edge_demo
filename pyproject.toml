@@ -1,0 +1,57 @@
+[project]
+name = "cv-quality-edge-demo"
+version = "0.1.0"
+description = "RF-DETR defect detector on VisA circuit boards, feeding Odoo's Vision Inspection"
+readme = "README.md"
+license = "Apache-2.0"
+license-files = ["LICENSE", "NOTICE"]
+requires-python = ">=3.10,<3.14"
+authors = [{ name = "ForgeFlow" }]
+dependencies = [
+    "rfdetr>=1.11,<2",
+    "numpy>=1.26",
+    "pillow>=10",
+    "scipy>=1.11",
+    # Direct dependencies so that [tool.uv.sources] below applies to them
+    "torch>=2.2",
+    "torchvision>=0.17",
+]
+
+[project.optional-dependencies]
+# Training only (PyTorch Lightning and COCO tools, all Apache, MIT or BSD): detecting and
+# the conveyor don't need it
+train = ["rfdetr[train]>=1.11,<2"]
+
+[project.scripts]
+cv-prepare = "cv_quality_edge.prepare:main"
+cv-train = "cv_quality_edge.train:main"
+cv-detect = "cv_quality_edge.detector:main"
+cv-evaluate = "cv_quality_edge.evaluate:main"
+cv-conveyor = "cv_quality_edge.conveyor:main"
+
+[dependency-groups]
+dev = ["pytest>=8"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/cv_quality_edge"]
+
+# Locally, torch comes from the CPU index: the CUDA wheels are gigabytes this machine can't
+# use. pip (Colab) ignores this section and keeps the CUDA torch Colab already has.
+[tool.uv.sources]
+torch = [{ index = "pytorch-cpu" }]
+torchvision = [{ index = "pytorch-cpu" }]
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100

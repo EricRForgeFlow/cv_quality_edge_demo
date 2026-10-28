@@ -1,0 +1,25 @@
+cv_quality_edge_demo
+Copyright 2026 ForgeFlow S.L.
+
+This product is licensed under the Apache License, Version 2.0 (see LICENSE).
+
+Third-party material
+--------------------
+
+VisA (Visual Anomaly) dataset
+  Copyright Amazon.com, Inc. or its affiliates.
+  Licensed under the Creative Commons Attribution 4.0 International licence (CC BY 4.0):
+  https://creativecommons.org/licenses/by/4.0/
+  Source: https://github.com/amazon-science/spot-diff
+  Zou et al., "SPot-the-Difference Self-Supervised Pre-training for Anomaly Detection and
+  Segmentation", ECCV 2022.
+  Changes: this project uses the PCB1, PCB2 and PCB3 objects only, converts their
+  segmentation masks to bounding boxes, resizes the images and splits them anew. The
+  dataset itself is downloaded from its source and is not redistributed here. The class
+  names come from the dataset's utils/id2class.py (Apache-2.0).
+
+RF-DETR
+  Copyright Roboflow, Inc. Licensed under the Apache License, Version 2.0.
+  https://github.com/roboflow/rf-detr
+  Only the Apache-2.0 models (Nano, Small) are used; the XL and 2XL models, under the
+  Roboflow Platform Model License, are not.
