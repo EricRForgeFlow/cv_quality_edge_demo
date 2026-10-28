@@ -91,7 +91,40 @@ Defect Classes*.
 
 ## Results
 
-To be filled in after the Colab run (`models/pcb_nano.metrics.json`).
+RF-DETR Nano, trained on Colab (Tesla T4, 640 px): early stopping ended the run after 40
+of the 60 epochs, keeping epoch 28 (validation mAP50:95 0.447). The notebook keeps the
+outputs of that run.
+
+On the 90 test boards it never saw (45 defective, 45 good), detection threshold 0.4:
+
+| Per board | |
+| --- | --- |
+| Defective boards caught | **43 / 45** (recall 0.956) |
+| Good boards passed | **44 / 45** (1 rejected) |
+| Rejected boards really defective | precision 0.977 |
+| Accuracy | 0.967 |
+
+| Per defect box | |
+| --- | --- |
+| mAP50 | 0.658 |
+| mAP50:95 | 0.401 |
+
+The box scores are lower than the board scores: a board with twelve missing parts is
+stopped as soon as the model finds one of them. The same numbers come out of
+`cv-evaluate` on a CPU, where detection takes 100 to 300 ms per board.
+
+Sent to Odoo (`vision_demo`, station rules of the Phase 1 demo: detections under 0.5
+ignored, under 0.7 sent to review), a run of 20 test boards gave 10/10 defective boards
+failed and 10/10 good boards passed:
+
+```
+[  4/20] pcb1_006.jpg   defective | bent 0.91, bent 0.83 (453 ms) | Odoo: VIS/2026/000024 FAIL
+[  5/20] pcb3_0907.jpg  good      | nothing (422 ms)               | Odoo: VIS/2026/000025 PASS
+[ 15/20] pcb2_045.jpg   defective | missing 0.69, missing 0.64, … (256 ms) | Odoo: VIS/2026/000035 FAIL
+```
+
+The weights (`pcb_nano.pth`, 120 MB) aren't in the repository: train them with the
+notebook.
 
 ## Layout
 
