@@ -46,7 +46,8 @@ uv run cv-evaluate
 ```
 
 One epoch takes about 20 minutes on a 12-core laptop CPU, so the 30 epochs of the preset
-run overnight. On a CPU, detection then takes 100 to 300 ms per board.
+run overnight. On a CPU, detection then takes from 0.1 to 2 s per board, 0.7 s on average
+(measured on a 12-core laptop, while Odoo ran on the same machine).
 
 ### 2. Run the conveyor
 
@@ -116,7 +117,7 @@ On the 90 test boards it never saw (45 defective, 45 good), detection threshold 
 
 The box scores are lower than the board scores: a board with twelve missing parts is
 stopped as soon as the model finds one of them. The same numbers come out of
-`cv-evaluate` on a CPU, where detection takes 100 to 300 ms per board.
+`cv-evaluate` on a CPU.
 
 Sent to Odoo (`vision_demo`, station rules of the Phase 1 demo: detections under 0.5
 ignored, under 0.7 sent to review), a run of 20 test boards gave 10/10 defective boards
